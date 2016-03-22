@@ -1,4 +1,4 @@
-### Notes on (racial) discrimintion legal data
+# Notes on (racial) discrimintion legal data
 
 ## File: race_discrimination_panel_level.dta
 
