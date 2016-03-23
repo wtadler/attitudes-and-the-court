@@ -74,3 +74,21 @@ def plot_time_series(data, y, year_colname = 'year', title = '', n_label = True)
     if n_label:
         for year in years:
             ax.text(year, mean[year], ' {}'.format(n[year]), rotation=55, verticalalignment='bottom', fontsize=9)
+
+    return ax
+
+def plot_court_cases(data, flip_vote = False, title = ''):
+	if flip_vote:
+		data['panelvote'] = 4 - data['panelvote']
+	
+	plt.plot(data['date'], data['panelvote'], 'o', markersize = 3, clip_on = False)
+	ax = plt.gca()
+
+	ax.set_ylim([0,3])
+	ax.set_yticks(np.arange(4))
+	ax.set_yticklabels(np.arange(4))
+	ax.set_ylabel('# "progressive" votes')
+
+	ax.set_title(title)
+
+	return ax
