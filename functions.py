@@ -39,7 +39,7 @@ def load_dta(filename, chunksize = 5000, **kwargs):
         return df
 
 def plot_time_series(data, y, year_colname = 'year', title = '', n_label = True):
-    # right now this works for categorical data as a function of time.
+    # right now this works for categorical, yes-no, and strong/mild/no-agree data as a function of time.
     # todo: make it more flexible.
 
     data = data[data[y].notnull()] # toss out rows with missing y values.
