@@ -20,3 +20,4 @@
 * some columns raise `ValueError: Categorical categories must be unique` ([see Stack Overflow](http://stackoverflow.com/questions/31782283/loading-stata-file-categorial-values-must-be-unique)). Will has discovered these so far, but hasn't looked systematically:
 	* `age`
 	* `zodiac`
+* in categorical pandas data, every category is assigned an integer. A -1 codes for a blank (NaN) entry. I modified `plot_time_series()` to toss out empty rows, but thought I'd note it here in case it comes up again.

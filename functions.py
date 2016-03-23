@@ -10,57 +10,67 @@ def dta_preview(filename, nEntries = 100):
     return df
 
 def load_dta(filename, chunksize = 5000, **kwargs):
-	# use columns as a list
-    import sys
-    reader = pd.read_stata(filename, iterator=True,**kwargs)
+    # use columns as a list
+    reader = pd.read_stata(filename, iterator=True, **kwargs)
     df = pd.DataFrame()
 
     try:
         chunk = reader.get_chunk(chunksize)
-        for col in chunk.columns:
-            if str(chunk[col].dtype) == 'category':
-                chunk[col] = chunk[col].astype('string')
 
         i = 0
         while len(chunk) > 0:
             i += 1
-            try:
-                df = df.append(chunk, ignore_index=True)
-            except ValueError as e:
-                print e
-                return df
+            df = df.append(chunk, ignore_index=True)
 
-            print 'Loaded {} rows...'.format(i*chunksize)
-
+            print 'Loaded {} rows...'.format(len(df))
             sys.stdout.flush()
 
             chunk = reader.get_chunk(chunksize)
-            for col in chunk.columns:
-                if str(chunk[col].dtype) == 'category':
-                    chunk[col] = chunk[col].astype('string')
 
-        print 'Done!'.format(len(df))
-    except (StopIteration, KeyboardInterrupt, ValueError):
-        pass
-    return df
+        print 'Done!'
+        return df
+
+    except StopIteration: # I guess this is an acceptable exception?
+        print 'Done!'
+        return df
+
+    except Exception as e:
+        print type(e).__name__ + ': ' + str(e)
+        return df
 
 def plot_time_series(data, y, year_colname = 'year', title = '', n_label = True):
-	years = data[year_colname].unique()
-	mean = {}
-	n = {}
+    # right now this works for categorical data as a function of time.
+    # todo: make it more flexible.
 
-	cat_strings = data[y].cat.categories
-	for year in years:
-		yeardata = data.loc[data[year_colname] == year]
-		coded_y = pd.Categorical.from_array(yeardata[y]).codes
-		mean[year] = np.mean(coded_y)
-		n[year] = len(coded_y)
+    data = data[data[y].notnull()] # toss out rows with missing y values.
 
-	plt.plot(years, [mean[year] for year in years])
-	ax = plt.gca()
-	ax.set_ylim([1, len(cat_strings)])
-	ax.set_yticklabels(cat_strings)
-	ax.set_title(title)
-	if n_label:
-		for year in years:
-		    ax.text(year, mean[year], ' {}'.format(n[year]), rotation=55, verticalalignment='bottom', fontsize=9)
+    years = data[year_colname].unique()
+    mean = {}
+    n = {}
+
+    cat_strings = data[y].cat.categories
+    if (set(['yes', 'no']) & set(cat_strings)) == set(cat_strings):
+        yesno = True
+    else:
+        yesno = False
+    n_cats = len(cat_strings)
+
+    for year in years:
+        yeardata = data.loc[data[year_colname] == year]
+        coded_y = pd.Categorical.from_array(yeardata[y]).codes
+        mean[year] = np.mean(coded_y)
+        n[year] = len(coded_y)
+
+    plt.plot(years, [mean[year] for year in years])
+    ax = plt.gca()
+    if yesno:
+        ax.set_ylim([-1, 1])
+        ax.set_yticks([-1, 1])
+    else:
+        ax.set_ylim([1, n_cats])
+        ax.set_yticks(1 + np.arange(n_cats))
+    ax.set_yticklabels(cat_strings)
+    ax.set_title(title)
+    if n_label:
+        for year in years:
+            ax.text(year, mean[year], ' {}'.format(n[year]), rotation=55, verticalalignment='bottom', fontsize=9)
