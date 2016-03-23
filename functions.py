@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sys 
 
 def dta_preview(filename, nEntries = 100):
     reader = pd.read_stata(filename, iterator=True)
@@ -11,24 +12,36 @@ def dta_preview(filename, nEntries = 100):
 def load_dta(filename, chunksize = 5000, **kwargs):
 	# use columns as a list
     import sys
-    reader = pd.read_stata(filename, iterator=True, **kwargs)
+    reader = pd.read_stata(filename, iterator=True,**kwargs)
     df = pd.DataFrame()
 
     try:
         chunk = reader.get_chunk(chunksize)
+        for col in chunk.columns:
+            if str(chunk[col].dtype) == 'category':
+                chunk[col] = chunk[col].astype('string')
+
         i = 0
         while len(chunk) > 0:
             i += 1
-            df = df.append(chunk, ignore_index=True)
+            try:
+                df = df.append(chunk, ignore_index=True)
+            except ValueError as e:
+                print e
+                return df
+
             print 'Loaded {} rows...'.format(i*chunksize)
+
             sys.stdout.flush()
+
             chunk = reader.get_chunk(chunksize)
+            for col in chunk.columns:
+                if str(chunk[col].dtype) == 'category':
+                    chunk[col] = chunk[col].astype('string')
+
         print 'Done!'.format(len(df))
     except (StopIteration, KeyboardInterrupt, ValueError):
         pass
-
-    
-
     return df
 
 def plot_time_series(data, y, year_colname = 'year', title = '', n_label = True):
