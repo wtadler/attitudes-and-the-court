@@ -1,6 +1,6 @@
 ---
 title: Attitudes and the court project proposal
-author: Will Adler, Anna Coenen, Alex Rich
+author: Will Adler, Anna Coenen, Alex Rich (advisor: Dr. Daniel Chen)
 output: pdf_document
 geometry: margin=1in
 
@@ -20,9 +20,9 @@ attitudes in the opposite direction (i.e., cause backlash) or to polarize attitu
 
 # Data sets
 
-We will use two main data sets for our analyses. The first is the General Social
-Survey, which records the social and political attitudes as well as demographic
-information for a representative sample of Americans since 1972. The second is a
+We will use two main data sets for our analyses. The first is the US General Social
+Survey (GSS), which records the social and political attitudes as well as demographic
+information for a representative sample of 57,061 Americans since 1972. The GSS has about 5,000 questions, though much of the data is missing. The second is a
 data set of US circuit court decisions for 6,500 cases. These cases are coded
 by topic (capital punishment, criminal appeals, etc.), and by the proportion of
 the three-court panel that voted in the more liberal or more conservative
@@ -34,7 +34,7 @@ the panel, including the party of their appointing president.
 # Evaluation of performance
 
 Our measure of performance will be the degree to which the inclusion of court
-ruling data improves the forcasting of attitude trends over time-series analysis
+ruling data improves the forecasting of attitude trends over time-series analysis
 using the GSS data alone. This will require two models: one that includes both
 GSS predictors and court data predictors, and one that uses GSS predictors alone.
 
