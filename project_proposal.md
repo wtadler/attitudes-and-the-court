@@ -16,7 +16,7 @@ project, we seek to measure how these rulings may affect Americans' social and
 political attitudes. Our goal is to determine whether court rulings tend to move
 attitudes in the direction "intended" by the ruling (e.g., towards acceptance of
 gays when a ruling expands gay rights), or whether rulings tend to move
-attitudes in the opposite direction (i.e., cause backlash) or to polarize attitudes.
+attitudes in the opposite direction (i.e., cause backlash) or polarize attitudes.
 
 # Data sets
 
@@ -54,7 +54,7 @@ While we do not have prior experience in time series analyses, our current plan
 is to use the ARIMA family of models for our analyses. Our first ARIMA model
 will simply predict the value of a given attitude over time using past values of
 that attitude, thus capturing basic trends in the attitude data. We will then
-add the court case rulings and the time of their occurance as an additional set
+add the court case rulings and the time of their occurrence as an additional set
 of predictors, and estimate the improvement of performance. Following this first
 step, we will then continue to improve our model by incorporating more
 predictors of attitudes from the GSS data (e.g., demographic information), as
