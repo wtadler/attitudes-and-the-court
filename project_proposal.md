@@ -1,9 +1,6 @@
 ---
 title: Attitudes and the court project proposal
-author: Will Adler, Anna Coenen, Alex Rich (advisor: Dr. Daniel Chen)
-output: pdf_document
-geometry: margin=1in
-
+author: Will Adler, Anna Coenen, Alex Rich (Advisor Daniel Chen)
 ---
 
 
