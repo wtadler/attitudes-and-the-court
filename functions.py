@@ -80,7 +80,7 @@ def plot_time_series(data, y, year_colname = 'year', title = '', n_label = True)
 def plot_court_cases(data, flip_vote = False, title = ''):
 	if flip_vote:
 		data['panelvote'] = 4 - data['panelvote']
-	
+
 	plt.plot(data['date'], data['panelvote'], 'o', markersize = 3, clip_on = False)
 	ax = plt.gca()
 
@@ -92,3 +92,22 @@ def plot_court_cases(data, flip_vote = False, title = ''):
 	ax.set_title(title)
 
 	return ax
+
+def preprocess_gss_demographics(gss):
+    # change age to number (89+ just coded as 89)
+    gss.age = gss.age.cat.codes + 18
+    age_mean = gss.age.mean()
+    gss.age = gss.age.fillna(age_mean)
+    # map sex to numeric
+    gss.sex = gss.sex.map({'female': 0, 'male': 1}).astype(int)
+    # fill in missing educ values with mean
+    gss.educ = gss.educ.cat.codes
+    educ_mean = gss.educ.mean()
+    gss.educ = gss.educ.replace(-1, educ_mean)
+    gss.insert(2, 'year_norm', gss.year-gss.year.mean())
+    # change categorical variables to one-hot encoding
+    gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
+    gss = pd.concat([gss, pd.get_dummies(gss['region'], prefix='region')], axis=1)
+    gss = pd.concat([gss, pd.get_dummies(gss['relig'], prefix='relig')], axis=1)
+    gss = gss.drop(['race', 'region', 'relig'], axis=1)
+    return gss
