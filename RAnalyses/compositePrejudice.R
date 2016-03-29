@@ -107,5 +107,7 @@ pScores = rdClean %>%
 
 raceData <- merge(raceData,pScores,by=c("year","id"))
 
+prejudiceComp = raceData%>%
+select(id,year,prejudice)
 
-write.table(raceData,file="raceData_withComposite.csv",sep=',')
+write.table(prejudiceComp,file="prejudiceVar.csv",sep=',')
