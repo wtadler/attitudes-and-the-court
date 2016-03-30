@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys 
 
+# make sure that in your repo, there is a symlink (named 'data') to the real 'data' folder
+def data_loc(filename):
+    import os
+    return os.path.join(os.readlink('data'), filename)
+
 def dta_preview(filename, nEntries = 100):
     reader = pd.read_stata(filename, iterator=True)
     df = reader.get_chunk(nEntries)
@@ -92,22 +97,3 @@ def plot_court_cases(data, flip_vote = False, title = ''):
 	ax.set_title(title)
 
 	return ax
-
-def preprocess_gss_demographics(gss):
-    # change age to number (89+ just coded as 89)
-    gss.age = gss.age.cat.codes + 18
-    age_mean = gss.age.mean()
-    gss.age = gss.age.fillna(age_mean)
-    # map sex to numeric
-    gss.sex = gss.sex.map({'female': 0, 'male': 1}).astype(int)
-    # fill in missing educ values with mean
-    gss.educ = gss.educ.cat.codes
-    educ_mean = gss.educ.mean()
-    gss.educ = gss.educ.replace(-1, educ_mean)
-    gss.insert(2, 'year_norm', gss.year-gss.year.mean())
-    # change categorical variables to one-hot encoding
-    gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
-    gss = pd.concat([gss, pd.get_dummies(gss['region'], prefix='region')], axis=1)
-    gss = pd.concat([gss, pd.get_dummies(gss['relig'], prefix='relig')], axis=1)
-    gss = gss.drop(['race', 'region', 'relig'], axis=1)
-    return gss
