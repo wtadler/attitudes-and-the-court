@@ -1,12 +1,18 @@
 import processing
 import modeling
 import matplotlib.pyplot as plt
-plt.ion()
+
+# comment out as needed
+import os
+os.chdir('/Local/Users/adler/attitudes-and-the-court')
+%matplotlib qt
+
+# plt.ion()
 
 gss = processing.preprocess_gss()
 court = processing.preprocess_court_data()
 
-data, y_col, x_cols = processing.process_combined_data(gss, court)
+data, y_col, x_cols = processing.process_combined_data(gss, court, 'affrmact')
 
 train, test = modeling.split_train_test(data)
 
