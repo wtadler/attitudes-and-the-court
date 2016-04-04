@@ -19,6 +19,7 @@ def preprocess_gss():
     gss.age = gss.age.cat.codes + 18
     age_mean = gss.age.mean()
     gss.age = gss.age.fillna(age_mean)
+    gss.age = (gss.age - gss.age.mean())/gss.age.std()
 
     # map sex to numeric
     gss.sex = gss.sex.map({'female': 0, 'male': 1}).astype(int)
@@ -27,7 +28,8 @@ def preprocess_gss():
     gss.educ = gss.educ.cat.codes
     educ_mean = gss.educ.mean()
     gss.educ = gss.educ.replace(-1, educ_mean)
-    gss.insert(3, 'year_norm', gss.year-gss.year.mean())
+    gss.educ = (gss.educ - gss.educ.mean())/gss.educ.std()
+    gss.insert(3, 'year_norm', (gss.year-gss.year.mean())/gss.year.std())
 
     # change categorical variables to one-hot encoding
     gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
@@ -55,25 +57,28 @@ def preprocess_court_data():
     # code votes by ideology
     joint['votelib'] = joint['panelvote']
     joint['votecons'] = 3 - joint['panelvote']
-    joint['votenorm'] = 1.5 - joint['panelvote']
+    # code
+    joint['votelib'] = (joint['panelvote'] > 1.5).astype(float)
 
     # group cases by type and year
     groupby_year_type = joint.groupby(['casetype', 'year'])
-    # take sum of normalized panel vote for all cases and years. why should this be sum instead of mean?
-    groupby_year_type = groupby_year_type.votenorm.aggregate(np.sum).reset_index()
+    # take sum of liberal decisions and conservative decisions for each year
+    groupby_year_type = groupby_year_type.votelib.agg({'cases_lib': np.sum, 'cases_cons': lambda x: np.size(x) - np.sum(x)}).reset_index()
 
     # lets just take affirmative action cases for now.
-    # return summed votenormed, yearly lags, up to 5 years
+    # return number of liberal and conservative decisions, yearly lags, up to 5 years
     affirm_year = groupby_year_type[groupby_year_type['casetype'] == 'aff_ac'].set_index('year')
     years = []
     lags = []
-    casesums = []
+    casesums_lib = []
+    casesums_cons = []
     for y in range(1985, 2005):
         for l in range(1, 6):
             years.append(y)
             lags.append(l)
-            casesums.append(affirm_year.loc[y-l, 'votenorm'])
-    affirm_5yr = pd.DataFrame({'year': years, 'lag': lags, 'casesum': casesums})
+            casesums_lib.append(affirm_year.loc[y-l, 'cases_lib'])
+            casesums_cons.append(affirm_year.loc[y-l, 'cases_cons'])
+    affirm_5yr = pd.DataFrame({'year': years, 'lag': lags, 'casesum_lib': casesums_lib, 'casesum_cons': casesums_cons})
     affirm_5yr = affirm_5yr.set_index(['year', 'lag'])
     return affirm_5yr
 
@@ -93,14 +98,19 @@ def process_combined_data(gss, court, y_name):
     gss = gss[(gss['year'] >= court_years[0]) & (gss['year'] <= court_years[-1])]
     gss = gss.reset_index()
 
+    court.casesum_lib = (court.casesum_lib - court.casesum_lib.mean())/court.casesum_lib.std()
+    court.casesum_cons = (court.casesum_cons - court.casesum_cons.mean())/court.casesum_cons.std()
+
     # add variables for last 5 years court cases. affrmact has been asked from 1994. this tracks changes only over 10 years.
     for year in gss['year'].unique():
         for l in range(1, 6):
-            gss.loc[gss['year'] == year, 'courtlag' + str(l)] = court.loc[(year, l), 'casesum']
+            gss.loc[gss['year'] == year, 'courtlag_lib' + str(l)] = court.loc[(year, l), 'casesum_lib']
+            gss.loc[gss['year'] == year, 'courtlag_cons' + str(l)] = court.loc[(year, l), 'casesum_cons']
 
     # add interactions with time
     columns = gss.columns.tolist()
-    for c in columns[5:]:
+    columns = [c for c in columns if c.startswith(('age', 'sex', 'educ', 'race_', 'region_', 'relig_'))]
+    for c in columns:
         gss[c + '_X_year'] = gss[c] * gss['year_norm']
     y_column = gss.columns.get_loc(y_name)
     x_columns = range(4, gss.shape[1])
