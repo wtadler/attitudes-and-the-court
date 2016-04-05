@@ -63,7 +63,7 @@ gss.meovrwrk = gss.meovrwrk.map({'strongly disagree': 0,
 						'strongly agree':4},na_action='ignore')
 
 
-#s Standardize columns
+# Standardize columns
 # print gss.groupby('year').mean()
 # print gss.groupby('year').count()
 
