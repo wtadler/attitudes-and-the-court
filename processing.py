@@ -112,6 +112,13 @@ def process_combined_data(gss, court, y_name):
     columns = [c for c in columns if c.startswith(('age', 'sex', 'educ', 'race_', 'region_', 'relig_'))]
     for c in columns:
         gss[c + '_X_year'] = gss[c] * gss['year_norm']
+
+    columns = gss.columns.tolist()
+    columns = [c for c in columns if c.startswith(('region_', 'relig_'))]
+    for c in columns:
+        for race in ['white', 'black', 'other']:
+            gss[race + '_X_' + c] = gss[c] * gss['race_' + race]
+
     y_column = gss.columns.get_loc(y_name)
     x_columns = range(4, gss.shape[1])
     return gss, y_column, x_columns
