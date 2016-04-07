@@ -101,11 +101,18 @@ def process_combined_data(gss, court, y_name):
     court.casesum_lib = (court.casesum_lib - court.casesum_lib.mean())/court.casesum_lib.std()
     court.casesum_cons = (court.casesum_cons - court.casesum_cons.mean())/court.casesum_cons.std()
 
-    # add variables for last 5 years court cases. affrmact has been asked from 1994. this tracks changes only over 10 years.
+    # # add variables for last 5 years court cases. affrmact has been asked from 1994. this tracks changes only over 10 years.
+    # for year in gss['year'].unique():
+    #     for l in range(1, 6):
+    #         gss.loc[gss['year'] == year, 'courtlag_lib' + str(l)] = court.loc[(year, l), 'casesum_lib']
+    #         gss.loc[gss['year'] == year, 'courtlag_cons' + str(l)] = court.loc[(year, l), 'casesum_cons']
     for year in gss['year'].unique():
-        for l in range(1, 6):
-            gss.loc[gss['year'] == year, 'courtlag_lib' + str(l)] = court.loc[(year, l), 'casesum_lib']
-            gss.loc[gss['year'] == year, 'courtlag_cons' + str(l)] = court.loc[(year, l), 'casesum_cons']
+        gss.loc[gss['year'] == year, 'court_lib'] = court.loc[(year, 1), 'casesum_lib'] + \
+                                                    court.loc[(year, 2), 'casesum_lib'] + \
+                                                    court.loc[(year, 3), 'casesum_lib']
+        gss.loc[gss['year'] == year, 'court_cons'] = court.loc[(year, 1), 'casesum_cons'] + \
+                                                     court.loc[(year, 2), 'casesum_cons'] + \
+                                                     court.loc[(year, 3), 'casesum_cons']
 
     # add interactions with time
     columns = gss.columns.tolist()
@@ -119,6 +126,13 @@ def process_combined_data(gss, court, y_name):
         for race in ['white', 'black', 'other']:
             gss[race + '_X_' + c] = gss[c] * gss['race_' + race]
 
+
+    columns = gss.columns.tolist()
+    columns = [c for c in columns if c.startswith(('age', 'sex', 'educ', 'race_', 'region_', 'relig_'))]
+    for decisiontype in ['lib', 'cons']:
+        # for lag in range(1,6):
+        for c in columns:
+            gss[c + '_X_' + decisiontype] = gss[c] * gss['court_' + decisiontype]
     y_column = gss.columns.get_loc(y_name)
     x_columns = range(4, gss.shape[1])
     return gss, y_column, x_columns
