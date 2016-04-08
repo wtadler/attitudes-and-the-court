@@ -3,17 +3,14 @@ import numpy as np
 import functions as f
 
 # processing of gss data before bringing court and gss together
-def preprocess_gss():
+def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     # choose cols to import. goes very slowly if you try to import everything
     # these seem like all of the relevant categories.
-    import_cols = ['id', 'affrmact', 'year', 'age',
-                   'sex', 'race', 'region', 'educ', 'relig']
+    import_cols = ['id', 'year', 'age',
+                   'sex', 'race', 'region', 'educ', 'relig'] \
+                   + extra_imports
 
     gss = f.load_dta(f.data_loc('GSS7212_R2.DTA'), columns=import_cols, chunksize=None)
-
-    # THESE LINES ADD ANNA'S COMPOSITE SCORE. COMMENTED OUT FOR NOW
-    # prej = pd.read_csv("composites/prejudiceVar.csv")
-    # gss = gss.merge(prej, 'left', on=["year","id"])
 
     # change age to number (89+ just coded as 89)
     gss.age = gss.age.cat.codes + 18
@@ -36,11 +33,19 @@ def preprocess_gss():
     gss = pd.concat([gss, pd.get_dummies(gss['region'], prefix='region')], axis=1)
     gss = pd.concat([gss, pd.get_dummies(gss['relig'], prefix='relig')], axis=1)
     gss = gss.drop(['race', 'region', 'relig'], axis=1)
+
+    if composite is not None:
+        compscore = pd.read_csv("composites/{}".format(composite))
+        compscore.set_index('idx', drop=True, inplace=True)
+        compscore.drop(['id', 'year'], axis=1, inplace=True)
+
+        gss = pd.merge(gss, compscore, left_index=True, right_index=True)
+
     return gss
 
 
 # processing of court data before bringing court and gss together
-def preprocess_court_data():
+def preprocess_court_data(max_lag=5):
     aff_ac = f.load_dta(f.data_loc('Circuit Cases/affirmative_action_panel_level.dta'), chunksize=None)
     race_discr = f.load_dta(f.data_loc('Circuit Cases/race_discrimination_panel_level.dta'), chunksize=None)
 
@@ -70,14 +75,17 @@ def preprocess_court_data():
     affirm_year = groupby_year_type[groupby_year_type['casetype'] == 'aff_ac'].set_index('year')
     years = []
     lags = []
-    casesums_lib = []
-    casesums_cons = []
+    casesums_lib = np.array([])
+    casesums_cons = np.array([])
     for y in range(1985, 2005):
-        for l in range(1, 6):
+        for l in range(1, 1+max_lag):
             years.append(y)
             lags.append(l)
-            casesums_lib.append(affirm_year.loc[y-l, 'cases_lib'])
-            casesums_cons.append(affirm_year.loc[y-l, 'cases_cons'])
+            casesums_lib = np.append(casesums_lib, affirm_year.loc[y-l, 'cases_lib'])
+            casesums_cons = np.append(casesums_cons, affirm_year.loc[y-l, 'cases_cons'])
+    casesums_lib = (casesums_lib - casesums_lib.mean())/casesums_lib.std()
+    casesums_cons = (casesums_cons - casesums_cons.mean())/casesums_cons.std()
+
     affirm_5yr = pd.DataFrame({'year': years, 'lag': lags, 'casesum_lib': casesums_lib, 'casesum_cons': casesums_cons})
     affirm_5yr = affirm_5yr.set_index(['year', 'lag'])
     return affirm_5yr
@@ -88,18 +96,15 @@ def process_combined_data(gss, court, y_name):
     gss = gss[gss[y_name].notnull()]
 
     # change affrmact to numeric
-    gss[y_name] = gss[y_name].map({'strongly support pref': 1.5,
-                                   'support pref': .5,
-                                   'oppose pref': -.5,
-                                   'strongly oppose pref': -1.5})
+    # gss[y_name] = gss[y_name].map({'strongly support pref': 1.5,
+    #                                'support pref': .5,
+    #                                'oppose pref': -.5,
+    #                                'strongly oppose pref': -1.5})
 
     # drop years without court case history
     court_years = court.index.levels[0]
     gss = gss[(gss['year'] >= court_years[0]) & (gss['year'] <= court_years[-1])]
     gss = gss.reset_index()
-
-    court.casesum_lib = (court.casesum_lib - court.casesum_lib.mean())/court.casesum_lib.std()
-    court.casesum_cons = (court.casesum_cons - court.casesum_cons.mean())/court.casesum_cons.std()
 
     # # add variables for last 5 years court cases. affrmact has been asked from 1994. this tracks changes only over 10 years.
     # for year in gss['year'].unique():
@@ -120,19 +125,24 @@ def process_combined_data(gss, court, y_name):
     for c in columns:
         gss[c + '_X_year'] = gss[c] * gss['year_norm']
 
+    # cross race with region and religion
     columns = gss.columns.tolist()
     columns = [c for c in columns if c.startswith(('region_', 'relig_'))]
     for c in columns:
         for race in ['white', 'black', 'other']:
             gss[race + '_X_' + c] = gss[c] * gss['race_' + race]
 
-
+    # cross all columns with number of liberal/conservative decisions in 3 years prior to survey
     columns = gss.columns.tolist()
     columns = [c for c in columns if c.startswith(('age', 'sex', 'educ', 'race_', 'region_', 'relig_'))]
     for decisiontype in ['lib', 'cons']:
         # for lag in range(1,6):
         for c in columns:
             gss[c + '_X_' + decisiontype] = gss[c] * gss['court_' + decisiontype]
+    
+    columns = gss.columns.tolist()
     y_column = gss.columns.get_loc(y_name)
-    x_columns = range(4, gss.shape[1])
+
+    x_columns = [i for i in range(gss.shape[1]) if columns[i] not in ['id', 'index', y_name]]
+    
     return gss, y_column, x_columns
