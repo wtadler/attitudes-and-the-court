@@ -1,21 +1,23 @@
 import getpass
 import os
 user = getpass.getuser()
-os.chdir("/Users/"+user+"/GoogleDrive/NYU_GD/MLClass/project/gitRepo/composites")
+os.chdir("/Users/"+user+"/GoogleDrive/NYU_GD/MLClass/project/gitVersion")
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import Imputer
 from scipy import linalg
+import functions as f
+
 
 # Get relevant columns
 import_cols = ['id', 'year', 'age','race', 'region', 'educ', 'relig','sex','fepol','fechld','fepresch','fefam','fehire','fejobaff','discaffm','meovrwrk']
 # Note: fethink, fecare, discaffw , and fenewsare missing after 1995
 
 gss = f.load_dta(f.data_loc('GSS7212_R2.DTA'), columns=import_cols, chunksize=None)
-
 # Select only post 1995
 gss = gss[gss.year>1995]
+
 
 # Replace strings in age variable
 gss.age = gss.age.cat.codes + 18
@@ -76,20 +78,44 @@ gss['fehireS'] = (gss.fehire-np.nanmean(gss.fehire))/np.std(gss.fehire)
 gss['discaffmS'] = (gss.discaffm-np.nanmean(gss.discaffm))/np.std(gss.discaffm)
 gss['meovrwrkS'] = (gss.meovrwrk-np.nanmean(gss.meovrwrk))/np.std(gss.meovrwrk)
 
-# Get columns from dataset
-varNames = ['fepolS','fechldS','fepreschS','fefamS','fejobaffS','fehireS','meovrwrkS']
-X = gss.loc[:,varNames].as_matrix()
+varNames = np.array(['fepolS','fechldS','fepreschS','fefamS','fejobaffS','fehireS','meovrwrkS'])
 
-# Delete rows with all missing data
-removeThese = np.where(np.sum(np.isnan(X),axis=1)>3)
-X = np.delete(X, removeThese,axis=0)
+# Before dropping data, let's keep the df for later.  
+gssOrig = gss.copy()
+
+
+# First, drop all rows that have 3 or more missing values 
+gss.dropna(axis=0,thresh=3,subset=varNames,inplace=True)
+
+
+# Then impute yearly mean values for remaining missing data points
+for i, year in enumerate(np.unique(gss.year)):
+	i_year = gss[gss.year == year].index.tolist()
+	yearMeans = np.mean(gss.loc[i_year,varNames],axis=0)
+	if sum(np.isnan(yearMeans)>0):
+		 # Whole year is missing, so take mean of pre and post
+		yearMeans['fejobaffS'] = -0.0461815
+		yearMeans['fehireS'] = -0.047274999
+		yearMeans['meovrwrkS'] = 0.1497375
+
+	i_nan = ~gss.loc[i_year,varNames].notnull()
+
+	for thisCol in varNames:
+		ind = (gss.year == year) & gss[thisCol].isnull()
+		gss.loc[ind,thisCol] = yearMeans[thisCol]
+
+
+
+# Get columns from dataset
+X = gss.loc[:,varNames].as_matrix()
 
 
 # For others, impute missing values using column mean.... not sure if this is great. hmmm...
-print 'number of imputed missing values is: ' + str(np.sum(np.isnan(X))) + " out of "+ str(np.size(X))
-imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-imp.fit(X)
-X= imp.transform(X) 
+# print 'number of imputed missing values is: ' + str(np.sum(np.isnan(X))) + " out of "+ str(np.size(X))
+# imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
+# imp.fit(X)
+# X= imp.transform(X) 
+
 
  # Run PCA
 pca = PCA(n_components='mle')
@@ -104,9 +130,9 @@ print(pca.explained_variance_ratio_)
 
 # Project all the data on first component
 firstcomp = pca.components_[0]
-data = gss.loc[:,varNames].as_matrix()
+data = gssOrig.loc[:,varNames].as_matrix()
 data = np.nan_to_num(data)
 
-gss['genderValue'] = np.dot(data,firstcomp)
+gssOrig['genderValue'] = np.dot(data,firstcomp)
 
-gss.to_csv("genderVar.csv",columns = ['id','year','genderValue'])
+gssOrig.to_csv("composites/genderVar.csv",columns = ['id','year','genderValue'])
