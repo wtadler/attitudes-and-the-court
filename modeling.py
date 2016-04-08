@@ -11,7 +11,7 @@ def split_train_test(data):
     return traindata, testdata
 
 def fit_model(traindata, testdata, y_col, x_cols):
-    enet = linear_model.ElasticNetCV(l1_ratio=0.9, cv=10)
+    enet = linear_model.ElasticNetCV(l1_ratio=0.9, cv=10, max_iter = 10000)
     enet.fit(traindata[:, x_cols], traindata[:, y_col])
     print "train R^2"
     print enet.score(traindata[:, x_cols], traindata[:, y_col])

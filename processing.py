@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import functions as f
+from sklearn.preprocessing import StandardScaler
 
 # processing of gss data before bringing court and gss together
 def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
@@ -12,21 +13,27 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 
     gss = f.load_dta(f.data_loc('GSS7212_R2.DTA'), columns=import_cols, chunksize=None)
 
-    # change age to number (89+ just coded as 89)
-    gss.age = gss.age.cat.codes + 18
-    age_mean = gss.age.mean()
-    gss.age = gss.age.fillna(age_mean)
-    gss.age = (gss.age - gss.age.mean())/gss.age.std()
+    def numeric_fillna_standardize(x):
+        x = x.cat.codes
+        x.loc[x==-1] =  x[x!=-1].mean()
+        x = StandardScaler().fit_transform(x.reshape(-1, 1))
+
+        return x
 
     # map sex to numeric
     gss.sex = gss.sex.map({'female': 0, 'male': 1}).astype(int)
 
-    # fill in missing educ values with mean
-    gss.educ = gss.educ.cat.codes
-    educ_mean = gss.educ.mean()
-    gss.educ = gss.educ.replace(-1, educ_mean)
-    gss.educ = (gss.educ - gss.educ.mean())/gss.educ.std()
-    gss.insert(3, 'year_norm', (gss.year-gss.year.mean())/gss.year.std())
+    # Standardize age, education, year
+    gss.age = numeric_fillna_standardize(gss.age)
+    gss.educ = numeric_fillna_standardize(gss.educ)
+    gss.insert(3, 'year_norm', StandardScaler().fit_transform(gss.year.reshape(-1, 1).astype(float)))
+
+    for col in extra_imports:
+        categories = gss[col].cat.categories
+        gss[col] = numeric_fillna_standardize(gss[col])
+        # check this for other types of categories
+        if 'strongly support pref' in categories:
+            gss[col] = -gss[col]
 
     # change categorical variables to one-hot encoding
     gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
@@ -35,12 +42,10 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     gss = gss.drop(['race', 'region', 'relig'], axis=1)
 
     if composite is not None:
-        compscore = pd.read_csv("composites/{}".format(composite))
-        compscore.set_index('idx', drop=True, inplace=True)
-        compscore.drop(['id', 'year'], axis=1, inplace=True)
-
+        # prejudiceVar.csv has weird indexing. not sure how to line it up with the GSS
+        compscore = pd.read_csv("composites/{}".format(composite), index_col='idx', usecols=['idx', 'genderValue'])
         gss = pd.merge(gss, compscore, left_index=True, right_index=True)
-
+    
     return gss
 
 
@@ -48,9 +53,11 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 def preprocess_court_data(max_lag=5):
     aff_ac = f.load_dta(f.data_loc('Circuit Cases/affirmative_action_panel_level.dta'), chunksize=None)
     race_discr = f.load_dta(f.data_loc('Circuit Cases/race_discrimination_panel_level.dta'), chunksize=None)
+    sex_discr = f.load_dta(f.data_loc('Circuit Cases/sex_discrimination_panel_level.dta'), chunksize=None)
 
     aff_ac['casetype'] = "aff_ac"
     race_discr['casetype'] = "race_discr"
+    sex_discr['casetype'] = "sex_discr"
 
     # join the two datasets, convert the date
     joint = pd.concat([aff_ac, race_discr])
@@ -94,12 +101,6 @@ def preprocess_court_data(max_lag=5):
 def process_combined_data(gss, court, y_name):
     # drop all rows where y variable is NA.
     gss = gss[gss[y_name].notnull()]
-
-    # change affrmact to numeric
-    # gss[y_name] = gss[y_name].map({'strongly support pref': 1.5,
-    #                                'support pref': .5,
-    #                                'oppose pref': -.5,
-    #                                'strongly oppose pref': -1.5})
 
     # drop years without court case history
     court_years = court.index.levels[0]
