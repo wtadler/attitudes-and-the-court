@@ -43,7 +43,7 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 
     if composite is not None:
         # prejudiceVar.csv has weird indexing. not sure how to line it up with the GSS
-        compscore = pd.read_csv("composites/{}".format(composite), index_col='idx', usecols=['idx', 'genderValue'])
+        compscore = pd.read_csv("composites/{}".format(composite), index_col='Unnamed: 0', usecols=['Unnamed: 0', 'genderValue'])
         gss = pd.merge(gss, compscore, left_index=True, right_index=True)
     
     return gss
@@ -51,6 +51,8 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 
 # processing of court data before bringing court and gss together
 def preprocess_court_data(max_lag=5):
+    # to do: parameterize court case set, get judge bio difference from expectation for each case
+    
     aff_ac = f.load_dta(f.data_loc('Circuit Cases/affirmative_action_panel_level.dta'), chunksize=None)
     race_discr = f.load_dta(f.data_loc('Circuit Cases/race_discrimination_panel_level.dta'), chunksize=None)
     sex_discr = f.load_dta(f.data_loc('Circuit Cases/sex_discrimination_panel_level.dta'), chunksize=None)
