@@ -10,10 +10,12 @@ import numpy.random as random
 random.seed(seed=43)
 # plt.ion()
 reload(processing)
-gss = processing.preprocess_gss()
+
+gss = processing.preprocess_gss(composite=None, extra_imports=['affrmact'])
 court = processing.preprocess_court_data()
 
-data, y_col, x_cols = processing.process_combined_data(gss, court, 'genderValue')
+# data, y_col, x_cols = processing.process_combined_data(gss, court, 'genderValue')
+data, y_col, x_cols = processing.process_combined_data(gss, court, 'affrmact')
 
 train, test = modeling.split_train_test(data)
 
