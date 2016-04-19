@@ -55,6 +55,8 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     gss.loc[gss.fipsstat.isin([1, 12, 13]), "circuit"] = 11
     gss.loc[gss.fipsstat.isin([11]), "circuit"] = 12
 
+    # modern 11th circuit was 5th circuit before 1982
+    gss.loc[(gss.circuit==11) & (gss.year<1982), 'circuit'] = 5
 
     gss.insert(3, 'year_norm', StandardScaler().fit_transform(gss.year.reshape(-1, 1).astype(float)))
 
