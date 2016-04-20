@@ -76,56 +76,63 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 
 
 # processing of court data before bringing court and gss together
-def preprocess_court_data(summing_window=5):
-    # to do: parameterize court case set, get judge bio difference from expectation for each case
+def preprocess_court_data(summing_window=5, cases='sex_discr'):
 
-    aff_ac = f.load_dta(f.data_loc('Circuit Cases/affirmative_action_panel_level.dta'), chunksize=None)
-    race_discr = f.load_dta(f.data_loc('Circuit Cases/race_discrimination_panel_level.dta'), chunksize=None)
-    sex_discr = f.load_dta(f.data_loc('Circuit Cases/sex_discrimination_panel_level.dta'), chunksize=None)
+    if cases=='sex_discr':
+        filename = 'Circuit Cases/affirmative_action_panel_level.dta'
+    elif cases=='race_discr':
+        filename = 'Circuit Cases/race_discrimination_panel_level.dta'
+    elif cases=='aff_ac':
+        filename = 'Circuit Cases/affirmative_action_panel_level.dta'
 
-    aff_ac['casetype'] = "aff_ac"
-    race_discr['casetype'] = "race_discr"
-    sex_discr['casetype'] = "sex_discr"
+    case_data = f.load_dta(f.data_loc(filename), chunksize=None)
 
-    # join the two datasets, convert the date
-    joint = pd.concat([aff_ac, race_discr])
-    joint['date'] = pd.to_datetime(joint.year.astype(int)*10000 +
-                                   joint.month.astype(int)*100 +
-                                   np.random.randint(1, 29, size=len(joint)),
+    case_data['date'] = pd.to_datetime(case_data.year.astype(int)*10000 +
+                                   case_data.month.astype(int)*100 +
+                                   np.random.randint(1, 29, size=len(case_data)),
                                    format='%Y%m%d')
 
     # code votes by ideology
-    joint['votelib'] = joint['panelvote']
-    joint['votecons'] = 3 - joint['panelvote']
-    # code
-    joint['votelib'] = (joint['panelvote'] > 1.5).astype(float)
+    # case_data['votelib'] = case_data['panelvote']
+    # case_data['votecons'] = 3 - case_data['panelvote']
+    case_data['lib_decision'] = (case_data['panelvote'] > 1.5).astype(float)
+    case_data['cons_decision'] = (case_data['panelvote'] < 1.5).astype(float)
+
+    case_data['lib_judge_diff'] = case_data['x_dem'] - case_data['E_x_dem']
+    # case_data['cons_judge_diff'] = case_data['x_repub']-case_data['E_x_repub']
+
+    # strip away most columns
+    case_data = case_data[['year', 'circuit', 'lib_decision', 'cons_decision', 'lib_judge_diff']]
 
     # group cases by type and year
-    groupby_year_type = joint.groupby(['casetype', 'circuit', 'year'])
+    grouped = case_data.groupby(['circuit', 'year'])
+
     # take sum of liberal decisions and conservative decisions for each year
-    groupby_year_type = groupby_year_type.votelib.agg({'cases_lib': np.sum, 'cases_cons': lambda x: np.size(x) - np.sum(x)}).reset_index()
+    # grouped = grouped.votelib.agg({'cases_lib': np.sum, 'cases_cons': lambda x: np.size(x) - np.sum(x)}).reset_index()
+    grouped = grouped.aggregate(np.sum) # just sum everything
 
-    affirm_year = groupby_year_type[groupby_year_type['casetype'] == 'aff_ac'].set_index(['circuit', 'year'])
+    # affirm_year = grouped[grouped['casetype'] == 'aff_ac'].set_index(['circuit', 'year'])
 
-    new_index = pd.MultiIndex.from_tuples([(c,y) for c in range(1,13) for y in range(1985, 2006)], names=['circuit', 'year'])
+    new_index = pd.MultiIndex.from_tuples([(c,y) for c in range(1,13) for y in range(1984, 2003)], names=['circuit', 'year'])
 
-    affirm_year = affirm_year.reindex(new_index)
-    affirm_year.cases_lib.fillna(0, inplace=True)
-    affirm_year.cases_cons.fillna(0, inplace=True)
-    affirm_year.casetype.fillna("aff_ac", inplace=True)
+    grouped = grouped.reindex(new_index)
+    grouped.lib_decision.fillna(0, inplace=True) # this should be the mean, right?
+    grouped.cons_decision.fillna(0, inplace=True)  # this should be the mean, right?
+    grouped.lib_judge_diff.fillna(0, inplace=True)
+
+    groupby = grouped.groupby(level='circuit')
+
+    lib_decision_window = groupby.lib_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
+    cons_decision_window = groupby.cons_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
+    lib_judge_diff_window = groupby.lib_judge_diff.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
+
+    grouped['lib_decision_window'] = lib_decision_window
+    grouped['cons_decision_window'] = cons_decision_window
+    grouped['lib_judge_diff_window'] = lib_judge_diff_window
 
 
-    affirm_year_grouped = affirm_year.groupby(level='circuit')
-
-    cases_cons = affirm_year_grouped.cases_cons.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
-    cases_lib = affirm_year_grouped.cases_lib.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
-
-    affirm_year.cases_cons = cases_cons
-    affirm_year.cases_lib = cases_lib
-
-
-    affirm_year = affirm_year[affirm_year.cases_cons.notnull()].reset_index()
-    return affirm_year
+    grouped = grouped[grouped.cons_decision_window.notnull()].reset_index()
+    return grouped
 
 
 def process_combined_data(gss, court, y_name):
@@ -138,10 +145,11 @@ def process_combined_data(gss, court, y_name):
     gss = gss.reset_index()
 
     court = court.set_index(["circuit", "year"])
+    courtvars = ['lib_decision_window', 'cons_decision_window', 'lib_judge_diff_window']
     for year in gss['year'].unique():
         for circuit in gss['circuit'].unique():
-            gss.loc[(gss['year'] == year) & (gss['circuit'] == circuit), 'court_lib'] = court.loc[(circuit, year), 'cases_lib']
-            gss.loc[(gss['year'] == year) & (gss['circuit'] == circuit), 'court_cons'] = court.loc[(circuit, year), 'cases_cons']
+            for courtvar in courtvars:
+                gss.loc[(gss['year'] == year) & (gss['circuit'] == circuit), courtvar] = court.loc[(circuit, year), courtvar]
 
     # add interactions with time
     columns = gss.columns.tolist()
@@ -159,10 +167,10 @@ def process_combined_data(gss, court, y_name):
     # cross all columns with number of liberal/conservative decisions in 3 years prior to survey
     columns = gss.columns.tolist()
     columns = [c for c in columns if (c.startswith(('age', 'sex', 'educ', 'race_', 'region_', 'relig_')) and (not 'year' in c))]
-    for decisiontype in ['lib', 'cons']:
+    for courtvar in courtvars:
         # for lag in range(1,6):
         for c in columns:
-            gss[c + '_X_' + decisiontype] = gss[c] * gss['court_' + decisiontype]
+            gss[c + '_X_' + courtvar] = gss[c] * gss[courtvar]
     
     columns = gss.columns.tolist()
     y_column = gss.columns.get_loc(y_name)
