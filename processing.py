@@ -70,7 +70,7 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     if composite is not None:
         # prejudiceVar.csv has weird indexing. not sure how to line it up with the GSS
         compscore = pd.read_csv("composites/{}".format(composite), index_col='Unnamed: 0', usecols=['Unnamed: 0', 'genderValue'])
-        gss = pd.merge(gss, compscore, left_index=True, right_index=True)
+        gss = gss.merge(compscore, 'left', on=["year","id"])
 
     return gss
 
