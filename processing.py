@@ -4,7 +4,7 @@ import functions as f
 from sklearn.preprocessing import StandardScaler
 
 # processing of gss data before bringing court and gss together
-def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
+def preprocess_gss(composite = 'genderVar.csv', extra_imports=[], convert_to_one_hot=True):
     # choose cols to import. goes very slowly if you try to import everything
     # these seem like all of the relevant categories.
     import_cols = ['id', 'year', 'age',
@@ -61,12 +61,12 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
 
     gss.insert(3, 'year_norm', StandardScaler().fit_transform(gss.year.reshape(-1, 1).astype(float)))
 
-
-    # change categorical variables to one-hot encoding
-    gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
-    gss = pd.concat([gss, pd.get_dummies(gss['region'], prefix='region')], axis=1)
-    gss = pd.concat([gss, pd.get_dummies(gss['relig'], prefix='relig')], axis=1)
-    gss = gss.drop(['race', 'region', 'relig'], axis=1)
+    if convert_to_one_hot:
+        # change categorical variables to one-hot encoding
+        gss = pd.concat([gss, pd.get_dummies(gss['race'], prefix='race')], axis=1)
+        gss = pd.concat([gss, pd.get_dummies(gss['region'], prefix='region')], axis=1)
+        gss = pd.concat([gss, pd.get_dummies(gss['relig'], prefix='relig')], axis=1)
+        gss = gss.drop(['race', 'region', 'relig'], axis=1)
 
     if composite is not None:
         # prejudiceVar.csv has weird indexing. not sure how to line it up with the GSS
