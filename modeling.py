@@ -27,11 +27,16 @@ def fit_model(traindata, testdata, y_col, x_cols, x_cols_nocourt):
 
     return court, no_court
 
-def plot_fit(data, model, x_cols, nonzero_only=True, title=''):
+def plot_fit(data, model, x_cols, nonzero_only=True, title='',binary=False):
     sns.set_style('darkgrid')
+    if binary:
+        coefs = model.coef_[0]
+    else:
+        coefs = model.coef_
     results = pd.DataFrame({'param': [data.columns.tolist()[i] for i in x_cols],
-                            'value': model.coef_})
+                            'value': coefs})
     if nonzero_only:
         results = results.loc[results.value != 0]
     sns.factorplot('value', 'param', kind="bar", data=results, size=10, aspect=.7)
     plt.title(title)
+
