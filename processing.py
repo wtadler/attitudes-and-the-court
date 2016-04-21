@@ -176,5 +176,6 @@ def process_combined_data(gss, court, y_name):
     y_column = gss.columns.get_loc(y_name)
 
     x_columns = [i for i in range(gss.shape[1]) if columns[i] not in ['id', 'year', 'state', 'fipsstat', 'index', y_name]]
+    x_columns_nocourt = [i for i in range(gss.shape[1]) if (columns[i] not in ['id', 'year', 'state', 'fipsstat', 'index', y_name] and not 'window' in columns[i])]
     
-    return gss, y_column, x_columns
+    return gss, y_column, x_columns, x_columns_nocourt

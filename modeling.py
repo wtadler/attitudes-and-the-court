@@ -10,13 +10,19 @@ def split_train_test(data):
     testdata = data.values[(len(data)-len(data)/10):, :]
     return traindata, testdata
 
-def fit_model(traindata, testdata, y_col, x_cols):
+def fit_model(traindata, testdata, y_col, x_cols, x_cols_nocourt):
     enet = linear_model.ElasticNetCV(l1_ratio=0.9, cv=10, max_iter = 10000)
     enet.fit(traindata[:, x_cols], traindata[:, y_col])
     print "train R^2"
     print enet.score(traindata[:, x_cols], traindata[:, y_col])
     print "test R^2"
     print enet.score(testdata[:, x_cols], testdata[:, y_col])
+    enet_2 = linear_model.ElasticNetCV(l1_ratio=0.9, cv=10, max_iter = 10000)
+    enet_2.fit(traindata[:, x_cols_nocourt], traindata[:, y_col])
+    print "train R^2 - no court predictors"
+    print enet_2.score(traindata[:, x_cols_nocourt], traindata[:, y_col])
+    print "test R^2 - no court predictors"
+    print enet_2.score(testdata[:, x_cols_nocourt], testdata[:, y_col])
     return enet
 
 def plot_fit(data, model, x_cols, nonzero_only=True):
