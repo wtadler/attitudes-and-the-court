@@ -8,7 +8,7 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     # choose cols to import. goes very slowly if you try to import everything
     # these seem like all of the relevant categories.
     import_cols = ['id', 'year', 'age',
-                   'sex', 'race', 'region', 'educ', 'relig'] \
+                   'sex', 'race', 'region', 'educ', 'relig', 'news'] \
                    + extra_imports
 
     gss = f.load_dta(f.data_loc('GSS7212_R2.DTA'), columns=import_cols, chunksize=None)
@@ -29,6 +29,7 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[]):
     # Standardize age, education, year
     gss.age = numeric_fillna_standardize(gss.age)
     gss.educ = numeric_fillna_standardize(gss.educ)
+    gss.news = -numeric_fillna_standardize(gss.news)
 
     for col in extra_imports:
         categories = gss[col].cat.categories
@@ -171,6 +172,11 @@ def process_combined_data(gss, court, y_name):
         # for lag in range(1,6):
         for c in columns:
             gss[c + '_X_' + courtvar] = gss[c] * gss[courtvar]
+    for courtvar in courtvars:
+        # for lag in range(1,6):
+        for c in gss.columns.tolist():
+            if courtvar in c:
+                gss[c + '_X_' + "news"] = gss[c] * gss['news']
     
     columns = gss.columns.tolist()
     y_column = gss.columns.get_loc(y_name)
