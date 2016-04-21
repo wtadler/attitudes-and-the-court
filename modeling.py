@@ -24,14 +24,14 @@ def fit_model(traindata, testdata, y_col, x_cols, x_cols_nocourt):
     print no_court.score(traindata[:, x_cols_nocourt], traindata[:, y_col])
     print "test R^2 - no court predictors"
     print no_court.score(testdata[:, x_cols_nocourt], testdata[:, y_col])
-    
+
     return court, no_court
 
-def plot_fit(data, model, x_cols, nonzero_only=True):
+def plot_fit(data, model, x_cols, nonzero_only=True, title=''):
     sns.set_style('darkgrid')
     results = pd.DataFrame({'param': [data.columns.tolist()[i] for i in x_cols],
                             'value': model.coef_})
     if nonzero_only:
         results = results.loc[results.value != 0]
     sns.factorplot('value', 'param', kind="bar", data=results, size=10, aspect=.7)
-    plt.show()
+    plt.title(title)
