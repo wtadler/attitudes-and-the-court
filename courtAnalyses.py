@@ -1,17 +1,11 @@
-import getpass
-import os
-# user = getpass.getuser()
-# os.chdir("/Users/"+user+"/GoogleDrive/NYU_GD/MLClass/project/gitVersion/")
-
-
 import processing
 import modeling
 import matplotlib.pyplot as plt
-import os
 import numpy.random as random
 random.seed(seed=43)
 plt.ion()
-
+from sklearn import linear_model
+import numpy as np
 
 
 data = processing.process_court_data_alone()

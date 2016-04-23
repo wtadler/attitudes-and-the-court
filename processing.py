@@ -78,26 +78,7 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[], convert_to_one
 
 # processing of court data before bringing court and gss together
 def preprocess_court_data(summing_window=5, cases='sex_discr'):
-
-    if cases=='sex_discr':
-        filename = 'Circuit Cases/affirmative_action_panel_level.dta'
-    elif cases=='race_discr':
-        filename = 'Circuit Cases/race_discrimination_panel_level.dta'
-    elif cases=='aff_ac':
-        filename = 'Circuit Cases/affirmative_action_panel_level.dta'
-
-    case_data = f.load_dta(f.data_loc(filename), chunksize=None)
-
-    case_data['date'] = pd.to_datetime(case_data.year.astype(int)*10000 +
-                                   case_data.month.astype(int)*100 +
-                                   np.random.randint(1, 29, size=len(case_data)),
-                                   format='%Y%m%d')
-
-    # code votes by ideology
-    # case_data['votelib'] = case_data['panelvote']
-    # case_data['votecons'] = 3 - case_data['panelvote']
-    case_data['lib_decision'] = (case_data['panelvote'] > 1.5).astype(float)
-    case_data['cons_decision'] = (case_data['panelvote'] < 1.5).astype(float)
+    case_data = process_court_data_alone(cases)
 
     case_data['lib_judge_diff'] = case_data['x_dem'] - case_data['E_x_dem']
     # case_data['cons_judge_diff'] = case_data['x_repub']-case_data['E_x_repub']
@@ -136,7 +117,7 @@ def preprocess_court_data(summing_window=5, cases='sex_discr'):
     return grouped
 
 
-def process_court_data_alone(cases ='sex_discr' ):
+def process_court_data_alone(cases='sex_discr'):
     if cases=='sex_discr':
         filename = 'Circuit Cases/affirmative_action_panel_level.dta'
     elif cases=='race_discr':
