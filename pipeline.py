@@ -1,6 +1,7 @@
 import processing
 import modeling
 import matplotlib.pyplot as plt
+import numpy as np
 
 # comment out as needed
 import os
@@ -23,4 +24,4 @@ train, test = modeling.split_train_test(data)
 
 model = modeling.fit_model(train, test, y_col, x_cols, x_cols_nocourt)
 
-modeling.plot_fit(data, model, x_cols)
+modeling.plot_fit(data, model[0], x_cols)

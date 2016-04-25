@@ -95,7 +95,7 @@ def preprocess_court_data(summing_window=5, cases='sex_discr'):
 
     # affirm_year = grouped[grouped['casetype'] == 'aff_ac'].set_index(['circuit', 'year'])
 
-    new_index = pd.MultiIndex.from_tuples([(c,y) for c in range(1,13) for y in range(1984, 2003)], names=['circuit', 'year'])
+    new_index = pd.MultiIndex.from_tuples([(c,y) for c in range(1,13) for y in range(int(case_data.year.min()), int(case_data.year.max())+1)], names=['circuit', 'year'])
 
     grouped = grouped.reindex(new_index)
     grouped.lib_decision.fillna(0, inplace=True) # this should be the mean, right?
