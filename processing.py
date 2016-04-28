@@ -77,14 +77,17 @@ def preprocess_gss(composite = 'genderVar.csv', extra_imports=[], convert_to_one
 
 
 # processing of court data before bringing court and gss together
-def preprocess_court_data(summing_window=5, cases='sex_discr'):
+def preprocess_court_data(summing_window=5, cases='sex_discr', include_decisions=True):
     case_data = process_court_data_alone(cases)
 
     case_data['lib_judge_diff'] = case_data['x_dem'] - case_data['E_x_dem']
     # case_data['cons_judge_diff'] = case_data['x_repub']-case_data['E_x_repub']
 
     # strip away most columns
-    case_data = case_data[['year', 'circuit', 'lib_decision', 'cons_decision', 'lib_judge_diff']]
+    cols = ['year', 'circuit', 'lib_judge_diff']
+    if include_decisions:
+        cols.extend(['lib_decision', 'cons_decision'])
+    case_data = case_data[cols]
 
     # group cases by type and year
     grouped = case_data.groupby(['circuit', 'year'])
@@ -98,22 +101,24 @@ def preprocess_court_data(summing_window=5, cases='sex_discr'):
     new_index = pd.MultiIndex.from_tuples([(c,y) for c in range(1,13) for y in range(int(case_data.year.min()), int(case_data.year.max())+1)], names=['circuit', 'year'])
 
     grouped = grouped.reindex(new_index)
-    grouped.lib_decision.fillna(0, inplace=True) # this should be the mean, right?
-    grouped.cons_decision.fillna(0, inplace=True)  # this should be the mean, right?
     grouped.lib_judge_diff.fillna(0, inplace=True)
+    if include_decisions:
+        grouped.lib_decision.fillna(0, inplace=True)
+        grouped.cons_decision.fillna(0, inplace=True)
 
     groupby = grouped.groupby(level='circuit')
 
-    lib_decision_window = groupby.lib_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
-    cons_decision_window = groupby.cons_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
     lib_judge_diff_window = groupby.lib_judge_diff.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
 
-    grouped['lib_decision_window'] = lib_decision_window
-    grouped['cons_decision_window'] = cons_decision_window
+    if include_decisions:
+        lib_decision_window = groupby.lib_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
+        cons_decision_window = groupby.cons_decision.apply(lambda x: x.rolling(window=summing_window, center=False).sum())
+        grouped['lib_decision_window'] = lib_decision_window
+        grouped['cons_decision_window'] = cons_decision_window
+
     grouped['lib_judge_diff_window'] = lib_judge_diff_window
 
-
-    grouped = grouped[grouped.cons_decision_window.notnull()].reset_index()
+    grouped = grouped[grouped.lib_judge_diff_window.notnull()].reset_index()
     return grouped
 
 
@@ -151,11 +156,15 @@ def process_combined_data(gss, court, y_name):
     gss = gss.reset_index()
 
     court = court.set_index(["circuit", "year"])
-    courtvars = ['lib_decision_window', 'cons_decision_window', 'lib_judge_diff_window']
+    courtvars = list(set(['lib_decision_window', 'cons_decision_window', 'lib_judge_diff_window']) & set(court.columns)) # because decision_info might not be there
+
     for year in gss['year'].unique():
         for circuit in gss['circuit'].unique():
             for courtvar in courtvars:
-                gss.loc[(gss['year'] == year) & (gss['circuit'] == circuit), courtvar] = court.loc[(circuit, year), courtvar]
+                try: # try, because lib_decision_window and cons_decision_window
+                    gss.loc[(gss['year'] == year) & (gss['circuit'] == circuit), courtvar] = court.loc[(circuit, year), courtvar]
+                except:
+                    pass
 
     # add interactions with time
     columns = gss.columns.tolist()
