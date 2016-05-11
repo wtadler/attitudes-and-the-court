@@ -13,8 +13,9 @@ def split_train_test(data, order=None):
     testdata = data.values[(len(data)-len(data)/10):, :]
     return traindata, testdata
 
-def fit_model(traindata, testdata, y_col, x_cols, x_cols_nocourt, print_fit=True):
-    court = linear_model.ElasticNetCV(l1_ratio=0.9, cv=10, max_iter = 10000)
+def fit_model(traindata, testdata, y_col, x_cols, x_cols_nocourt, print_fit=True,
+              model=linear_model.ElasticNetCV(l1_ratio=[.1, .5, .7, .9, .95, .99], cv=10, max_iter = 10000)):
+    court = model
     court.fit(traindata[:, x_cols], traindata[:, y_col])
     if print_fit:
         print "train R^2"
