@@ -1,0 +1,1 @@
+Figure 1. GSS respondents who were older, male, or had fewer years of formal education scored highly on the gender conservatism index. Error bars represent 95% confidence intervals on the bootstrapped mean.

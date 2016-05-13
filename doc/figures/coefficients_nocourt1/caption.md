@@ -1,0 +1,1 @@
+Figure 3. GSS demographic predictors of conservative attitudes about gender roles, from a linear regression model using only demographic predictors from the GSS (and no court data).

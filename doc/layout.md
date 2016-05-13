@@ -1,0 +1,9 @@
+untitled.md
+Data_preprocessing_and_independent_variables__.md
+Dependent_variable_Index_of_conservative__.md
+figures/gci/gci.png
+Modeling_approach_Main_model_Our__.md
+Results_All_results_reported_below__.md
+figures/summing_windows/summing_windows.png
+figures/coefficients_nocourt1/coefficients_nocourt.svg
+Discussion_Although_we_used_several__.md
