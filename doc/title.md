@@ -1,1 +1,0 @@
-Social attitudes cannot be predicted from federal court decisions and judge characteristics

@@ -1,1 +1,0 @@
-Figure 2. \(R^2\) of null model (no court) and full model on training and test set, by court data summing window. 
