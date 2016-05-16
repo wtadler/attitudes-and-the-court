@@ -88,7 +88,7 @@ and by examining its coefficients for each question, we confirmed that it captur
 
 After projecting the question data on this component, participants with more traditional views on gender roles (assigning more domestic responsibilities to women and more professional ones to men)  end up with higher values than more progressive respondents. In the rest of this report we will use this measure as our dependent variable, which we refer to as the _gender conservatism index_. 
 
-![Figure 1: Gender conservatism index](figs/gci.pdf)
+![Figure 1: Gender conservatism index](figs/gci.png)
 
 Figure 1: GSS respondents who were older, male, or had fewer years of formal education scored highly on the gender conservatism index. Error bars represent 95% confidence intervals on the bootstrapped mean.
 
@@ -133,11 +133,11 @@ recent circuit court decisions did not improve the prediction of gender conserva
 
 Although we were unable to detect any impact from the court decisions on the gender conservatism index, a number of demographic variables proved reliably predictive of gender conservatism. As Figure 3 shows, among the most reliable predictors were age, gender, race, education, and religion of the respondent. 
 
-![Figure 2: R^2](figs/summing_windows.pdf)
+![Figure 2: R^2](figs/summing_windows.png)
 
 Figure 2: $R^2$ of null model (no court) and full model on training and test set, by court data summing window.
 
-![Figure 3: Coefficients](figs/coefficients_nocourt.pdf)
+![Figure 3: Coefficients](figs/coefficients_nocourt.png)
 Figure 3: Coefficients of GSS demographic predictors of conservative attitudes about gender roles, from a linear regression model using only demographic predictors from the GSS (and no court data).
 
 ## Discussion
