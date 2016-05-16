@@ -21,11 +21,11 @@ on attitudes about gender roles.
 ## Datasets
 To address this question we used two datasets.
 
-First, we used the US General Social Survey (GSS), which is a long running (1972–) survey on social attitudes and behaviors of US American citizens [^fn1]. In addition to social attitudes, the GSS provides demographic and life-course data about respondents. Each row represents one respondent.
+First, we used the US General Social Survey (GSS), which is a long running (1972–) survey on social attitudes and behaviors of US American citizens<sup>[1](#ref1)</sup>. In addition to social attitudes, the GSS provides demographic and life-course data about respondents. Each row represents one respondent.
 
-Second, we used a database of federal appeals court cases that were decided at the level of circuit courts[^fn2]. The cases were separated by issue (e.g. affirmative action, gender discrimination, racial discrimination). The federal court system is divided into 12 circuits, each of which establishes legal precedent for a group of several states. A circuit court case is decided by a randomly assigned panel of three judges chosen from the pool of judges appointed to that circuit.  The dataset provides information about the outcome of each case, which is coded as the number of judges who voted in favor the outcome that can be considered to be more "progressive" (for example, pro-affirmative action, and against racial or gender discrimination).
+Second, we used a database of federal appeals court cases that were decided at the level of circuit courts<sup>[2](#ref2)</sup>. The cases were separated by issue (e.g. affirmative action, gender discrimination, racial discrimination). The federal court system is divided into 12 circuits, each of which establishes legal precedent for a group of several states. A circuit court case is decided by a randomly assigned panel of three judges chosen from the pool of judges appointed to that circuit.  The dataset provides information about the outcome of each case, which is coded as the number of judges who voted in favor the outcome that can be considered to be more "progressive" (for example, pro-affirmative action, and against racial or gender discrimination).
 
-Another dataset was used to assign judge characteristics to each case[^fn3]. This included, for instance, the number of panel judges who were female, or who were appointed by a Democratic president. It also included the average number of female judges (and other characteristics) in the pool of judges for that circuit at the time of the ruling.
+Another dataset was used to assign judge characteristics to each case<sup>[3](#ref3)</sup>. This included, for instance, the number of panel judges who were female, or who were appointed by a Democratic president. It also included the average number of female judges (and other characteristics) in the pool of judges for that circuit at the time of the ruling.
 
 For our analyses reported below, we focused of the issue of gender discrimination, and restricted ourselves to court case data pertaining to that issue. In total, we used 100 cases (one case per row) that were decided between 1995 and 2004. We chose this subset of cases because it was the subset that had the longest period of intersection with several relevant questions on the GSS.
 
@@ -120,7 +120,7 @@ In all cases, court-related predictors decreased performance on the validation s
 All results reported below are calculated based on ten runs of the model, using a different randomly selected 10% of the GSS data held out as a test set on each run.
 
 ### Null model: Demographics only
-When predicting the gender conservatism index using demographic predictors alone, we achieved $R^2 \approx .11$ of  on the training set, and $R^2 \approx .092$  on the test set.
+When predicting the gender conservatism index using demographic predictors alone, we achieved R^2 ≈ .11 of  on the training set, and R^2 ≈ .092  on the test set.
 
 ### Full model: Demographics and court data
 We tested two versions of the full model that included the court data in addition to demographic predictors. 
@@ -129,13 +129,13 @@ Second, we also tested a model with only the judge ideology predictor. Since jud
 
 
 Across all temporal windows tested (1 to 10 years), the addition of information from
-recent circuit court decisions did not improve the prediction of gender conservatism in our test set. This is illustrated by Figure 2, which shows the $R^2$ by model type (demographics only or demographics + court), time window, and dataset (training or test). On the test set, the full models' performance is consistently worse than those of the null model.
+recent circuit court decisions did not improve the prediction of gender conservatism in our test set. This is illustrated by Figure 2, which shows the R^2 by model type (demographics only or demographics + court), time window, and dataset (training or test). On the test set, the full models' performance is consistently worse than those of the null model.
 
 Although we were unable to detect any impact from the court decisions on the gender conservatism index, a number of demographic variables proved reliably predictive of gender conservatism. As Figure 3 shows, among the most reliable predictors were age, gender, race, education, and religion of the respondent. 
 
-![Figure 2: R^2](figs/summing_windows.png)
+![Figure 2: R2](figs/summing_windows.png)
 
-Figure 2: $R^2$ of null model (no court) and full model on training and test set, by court data summing window.
+Figure 2: R^2 of null model (no court) and full model on training and test set, by court data summing window.
 
 ![Figure 3: Coefficients](figs/coefficients_nocourt.png)
 Figure 3: Coefficients of GSS demographic predictors of conservative attitudes about gender roles, from a linear regression model using only demographic predictors from the GSS (and no court data).
@@ -146,6 +146,10 @@ Although we used several modeling approaches, we did not find a relationship bet
 
 An interesting future direction might be to study this question using supreme court cases, which (sometimes) receive far greater media coverage. For example, did the recent Obergefell v. Hodges ruling alter Americans' views about same-sex marriage? This kind of high-profile case may be the most likely to shift attitudes perceptibly, though this very landmark status also means that such cases are rare, and thus difficult to statistically analyze.
 
-[^fn1]: Smith, Tom W, Marsden, Peter V, Hout, Michael, and Kim, Jibum, General Social Surveys, 1972-2012 [machine-readable data file]. Principal Investigator, Smith, Tom W.; Co-Principal Investigators, Peter V. Marsden and Michael Hout; Sponsored by National Science Foundation. --NORC ed.-- Chicago: National Opinion Research Center [producer]; Storrs, CT: The Roper Center for Public Opinion Research, University of Connecticut [distributor], 2013.
-[^fn2]: Sunstein, Cass R. _Are Judges Political?: An Empirical Analysis of the Federal Judiciary._ Washington: Brookings Institution Press, 2006.
-[^fn3]: Zuk, Gary, Deborah J. Barrow, and Gerard S. Gryski. Multi-User Database on the Attributes of United States Appeals Court Judges, 1801-2000. ICPSR06796-v2. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2009-02-03. [http://doi.org/10.3886/ICPSR06796.v2](http://doi.org/10.3886/ICPSR06796.v2)
+## References
+
+<span name="ref1">1</a>: Smith, Tom W, Marsden, Peter V, Hout, Michael, and Kim, Jibum, General Social Surveys, 1972-2012 [machine-readable data file]. Principal Investigator, Smith, Tom W.; Co-Principal Investigators, Peter V. Marsden and Michael Hout; Sponsored by National Science Foundation. --NORC ed.-- Chicago: National Opinion Research Center [producer]; Storrs, CT: The Roper Center for Public Opinion Research, University of Connecticut [distributor], 2013.
+
+<span name="ref2">2</a>: Sunstein, Cass R. _Are Judges Political?: An Empirical Analysis of the Federal Judiciary._ Washington: Brookings Institution Press, 2006.
+
+<span name="ref3">3</a>: Zuk, Gary, Deborah J. Barrow, and Gerard S. Gryski. Multi-User Database on the Attributes of United States Appeals Court Judges, 1801-2000. ICPSR06796-v2. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2009-02-03. [http://doi.org/10.3886/ICPSR06796.v2](http://doi.org/10.3886/ICPSR06796.v2)
