@@ -1,6 +1,6 @@
 # Social attitudes cannot be predicted from federal court decisions and judge characteristics.
 
-#### William T. Adler, Anna Coenen, Alexander S. Rich (Adviser: Daniel S. Chen)
+#### William T. Adler, Anna Coenen, Alexander S. Rich (Adviser: Daniel L. Chen)
 
 
 
@@ -138,7 +138,8 @@ Although we were unable to detect any impact from the court decisions on the gen
 Figure 2: R^2 of null model (no court) and full model on training and test set, by court data summing window.
 
 ![Figure 3: Coefficients](figs/coefficients_nocourt.png)
-Figure 3: Coefficients of GSS demographic predictors of conservative attitudes about gender roles, from a linear regression model using only demographic predictors from the GSS (and no court data).
+
+Figure 3: Coefficients of GSS demographic predictors of conservative attitudes about gender roles, from a linear regression model using only demographic predictors from the GSS (and no court data).
 
 ## Discussion
 
